@@ -106,6 +106,11 @@
         .form-table col.input-col { width: calc(100% - 40% - 48mm); }
         .form-table col.photo-col { width: 48mm; }
         .form-table .input-col { width: 100%; box-sizing: border-box; overflow: hidden; min-width: 0; }
+        .form-table .input-col input[type="text"],
+        .form-table .input-col input[type="date"],
+        .form-table .input-col input[type="tel"],
+        .form-table .input-col select { width: 208px; max-width: 208px; box-sizing: border-box; }
+        .form-table .input-col textarea { width: 100%; box-sizing: border-box; }
 
         .form-with-photo { margin-bottom: 5mm; }
         .photo-cell {
@@ -477,7 +482,7 @@
                     <td class="input-col" colspan="2"><input type="text" name="previousSchool" id="previousSchool" placeholder="School name"></td>
                 </tr>
                 <tr>
-                    <td class="label-col">Parent / Guardian Name:</td>
+                    <td class="label-col">Guardian Name:</td>
                     <td class="input-col" colspan="2"><input type="text" name="parentName" id="parentName" placeholder="Full name"></td>
                 </tr>
                 <tr>
