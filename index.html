@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choose Portal - Receipt / Admission</title>
+    <link rel="preload" href="assets/landing/1.webp" as="image">
+    <link rel="preload" href="assets/landing/1.jpg" as="image">
     <style>
         * { box-sizing: border-box; }
         body {
@@ -111,62 +113,42 @@
         (function () {
             var folder = 'assets/landing/';
             var maxSlides = 25;
-            var extensions = ['jpg', 'jpeg', 'png', 'webp'];
+            var extensions = ['webp', 'jpg', 'jpeg', 'png'];
             var slides = [];
             var container = document.getElementById('bgSlideshow');
             var currentIndex = 0;
             var intervalMs = 5000;
-
-            function tryLoadSlides() {
-                var index = 1;
-                function tryNext() {
-                    if (index > maxSlides) {
-                        startSlideshow();
-                        return;
-                    }
-                    var extIndex = 0;
-                    function tryExt() {
-                        if (extIndex >= extensions.length) {
-                            index++;
-                            tryNext();
-                            return;
-                        }
-                        var ext = extensions[extIndex];
-                        var url = folder + index + (ext === 'jpeg' ? '.jpeg' : '.' + ext);
-                        var img = new Image();
-                        img.onload = function () {
-                            slides.push(url);
-                            index++;
-                            tryNext();
-                        };
-                        img.onerror = function () {
-                            extIndex++;
-                            tryExt();
-                        };
-                        img.src = url;
-                    }
-                    tryExt();
-                }
-                tryNext();
-            }
+            var started = false;
+            var pending = 0;
 
             var fallbackImages = [
-                'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1920&q=80',
-                'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1920&q=80',
-                'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1920&q=80',
-                'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&q=80',
-                'https://images.unsplash.com/photo-1523050872442-44cbdd921946?w=1920&q=80'
+                'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1280&q=75',
+                'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1280&q=75',
+                'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1280&q=75',
+                'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1280&q=75',
+                'https://images.unsplash.com/photo-1523050872442-44cbdd921946?w=1280&q=75'
             ];
+
+            function showFirstSlide() {
+                if (started || slides.length === 0) return;
+                started = true;
+                startSlideshow();
+            }
+
+            function addSlide(url) {
+                var i = slides.length;
+                var div = document.createElement('div');
+                div.className = 'bg-slide' + (i === 0 ? ' active' : '');
+                div.style.backgroundImage = 'url(' + url + ')';
+                container.appendChild(div);
+            }
 
             function startSlideshow() {
                 if (slides.length === 0) {
                     slides = fallbackImages.slice();
                 }
                 slides.forEach(function (url, i) {
-                    var div = document.createElement('div');
-                    div.className = 'bg-slide' + (i === 0 ? ' active' : '');
-                    div.style.backgroundImage = 'url(' + url + ')';
-                    container.appendChild(div);
+                    addSlide(url);
                 });
                 setInterval(function () {
                     var els = container.querySelectorAll('.bg-slide');
@@ -175,6 +157,48 @@
                     currentIndex = (currentIndex + 1) % els.length;
                     els[currentIndex].classList.add('active');
                 }, intervalMs);
+            }
+
+            function tryOne(url, onDone) {
+                var img = new Image();
+                img.onload = function () {
+                    if (slides.indexOf(url) === -1) {
+                        slides.push(url);
+                        if (started) {
+                            addSlide(url);
+                        } else {
+                            showFirstSlide();
+                        }
+                    }
+                    onDone();
+                };
+                img.onerror = onDone;
+                img.src = url;
+            }
+
+            function tryLoadSlides() {
+                var index = 1;
+                function tryNext() {
+                    if (index > maxSlides) {
+                        if (!started && slides.length === 0) {
+                            slides = fallbackImages.slice();
+                            startSlideshow();
+                        }
+                        return;
+                    }
+                    pending = extensions.length;
+                    extensions.forEach(function (ext) {
+                        var url = folder + index + (ext === 'jpeg' ? '.jpeg' : '.' + ext);
+                        tryOne(url, function () {
+                            pending--;
+                            if (pending === 0) {
+                                index++;
+                                tryNext();
+                            }
+                        });
+                    });
+                }
+                tryNext();
             }
 
             tryLoadSlides();
